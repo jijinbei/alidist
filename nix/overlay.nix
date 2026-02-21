@@ -1,9 +1,35 @@
 # ALICE overlay for nixpkgs
+# Arguments from flake.nix: source inputs for O2 and O2Physics
+{ o2-src, o2physics-src }:
+
 final: prev:
 let
   # Use mold linker for all ALICE packages (matches defaults-o2.sh)
   moldStdenv = prev.stdenvAdapters.useMoldLinker prev.stdenv;
   callPackage = prev.lib.callPackageWith (final // { stdenv = moldStdenv; });
+
+  # Arrow with Gandiva (JIT expression engine) — required by O2 DPL framework.
+  # nixpkgs arrow-cpp doesn't enable Gandiva by default; we add LLVM + clang.
+  # Gandiva precompiles C++ to LLVM bitcode using clang; we must point clang
+  # at the GCC C++ standard library headers since nixpkgs uses GCC stdenv.
+  gcc = prev.stdenv.cc.cc;
+  arrow-cpp-gandiva = prev.arrow-cpp.overrideAttrs (old: {
+    buildInputs = old.buildInputs ++ [
+      prev.llvmPackages.llvm
+      prev.llvmPackages.llvm.dev
+    ];
+    nativeBuildInputs = old.nativeBuildInputs ++ [
+      prev.llvmPackages.clang-unwrapped
+      prev.llvmPackages.llvm
+    ];
+    cmakeFlags = old.cmakeFlags ++ [
+      (prev.lib.cmakeBool "ARROW_GANDIVA" true)
+      "-DLLVM_DIR=${prev.llvmPackages.llvm.dev}/lib/cmake/llvm"
+      # Tell Gandiva's clang where to find GCC C++ and glibc headers for bitcode compilation
+      # Use semicolons so CMake treats this as a list, not multiple arguments
+      "-DARROW_GANDIVA_PC_CXX_FLAGS=-isystem;${gcc}/include/c++/${gcc.version};-isystem;${gcc}/include/c++/${gcc.version}/x86_64-unknown-linux-gnu;-isystem;${prev.glibc.dev}/include"
+    ];
+  });
 in {
   alice = {
     # Layer 1: ROOT with ALICE overrides
@@ -13,6 +39,9 @@ in {
       inherit (prev) root arrow-cpp protobuf mold;
       pythia = prev.pythia or null;
     };
+
+    # Arrow with Gandiva support for O2
+    inherit arrow-cpp-gandiva;
 
     # Layer 2a: Simple packages
     faircmakemodules = callPackage ./hep/faircmakemodules.nix {};
@@ -85,7 +114,10 @@ in {
     });
 
     # Layer 3: ALICE applications
+    # Sources are managed as flake inputs (flake.lock pins the commit)
     o2 = callPackage ./alice/o2.nix {
+      src = o2-src;
+      arrow-cpp = arrow-cpp-gandiva;
       root = final.alice.root;
       fairroot = final.alice.fairroot;
       fairmq = final.alice.fairmq;
@@ -109,6 +141,7 @@ in {
       kfparticle = final.alice.kfparticle;
     };
     o2physics = callPackage ./alice/o2physics.nix {
+      src = o2physics-src;
       o2 = final.alice.o2;
       onnxruntime = final.alice.onnxruntime;
       kfparticle = final.alice.kfparticle;

@@ -34,10 +34,46 @@
         "type": "github"
       }
     },
+    "o2-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1771687886,
+        "narHash": "sha256-AYqvfXy9iCq4V7C6iuMW8ShdGVrzW7tYRPhDAKTzkcA=",
+        "owner": "AliceO2Group",
+        "repo": "AliceO2",
+        "rev": "f23aa72dfdb3779502c9510526dab12715756c40",
+        "type": "github"
+      },
+      "original": {
+        "owner": "AliceO2Group",
+        "ref": "dev",
+        "repo": "AliceO2",
+        "type": "github"
+      }
+    },
+    "o2physics-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1771692779,
+        "narHash": "sha256-4g/Y4tfHXGMSCWiYU2JWg37t+AM3WkXbNDXXPuUlUYE=",
+        "owner": "AliceO2Group",
+        "repo": "O2Physics",
+        "rev": "ceb2cb7371f3b03b7e30eac43569be32a722e715",
+        "type": "github"
+      },
+      "original": {
+        "owner": "AliceO2Group",
+        "ref": "master",
+        "repo": "O2Physics",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
         "flake-utils": "flake-utils",
-        "nixpkgs": "nixpkgs"
+        "nixpkgs": "nixpkgs",
+        "o2-src": "o2-src",
+        "o2physics-src": "o2physics-src"
       }
     },
     "systems": {

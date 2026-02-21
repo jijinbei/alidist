@@ -3,31 +3,30 @@
 #
 # This is the core ALICE O2 framework. It depends on nearly all Layer 2 packages.
 # GPU support (CUDA/HIP/OpenCL) is disabled for the Nix build.
-{ lib, stdenv, fetchFromGitHub, cmake, ninja
+#
+# Source is provided as a flake input (managed by flake.lock).
+# Update with: nix flake lock --update-input o2-src
+{ lib, stdenv, cmake, ninja, pkg-config, src
 , root, fairroot, fairmq, fairlogger, vmc, vc
 , geant3, geant4, geant4_vmc, mcsteplogger
 , configuration, monitoring, common-o2, libinfologger
 , debuggui, jalien-root, libjalien-o2, bookkeeping-api
 , mlmodels, onnxruntime, kfparticle
 , boost, fmt, zeromq, curl, protobuf, gsl, openssl
-, freetype, libpng, xz, libxml2, fftw, nlohmann_json, zlib
+, freetype, libpng, xz, libxml2, fftw, fftwSinglePrec, nlohmann_json, zlib
 , abseil-cpp, libuv, rapidjson, cgal, microsoft-gsl
 , arrow-cpp, flatbuffers, hepmc3, fastjet
-, python3
+, python3, onetbb, grpc
+, llvmPackages
 }:
 
-stdenv.mkDerivation rec {
+stdenv.mkDerivation {
   pname = "o2";
-  version = "nightly";
+  version = src.shortRev or src.rev or "dev";
 
-  src = fetchFromGitHub {
-    owner = "AliceO2Group";
-    repo = "AliceO2";
-    rev = "dev";
-    hash = "sha256-aVSLhTNtBp4s/1bxisbqFm1Bod29t8sSKPMlHlK0eEs=";
-  };
+  inherit src;
 
-  nativeBuildInputs = [ cmake ninja python3 protobuf ];
+  nativeBuildInputs = [ cmake ninja python3 protobuf pkg-config llvmPackages.clang-unwrapped ];
   buildInputs = [
     # Layer 1
     root
@@ -40,13 +39,48 @@ stdenv.mkDerivation rec {
     geant4_vmc mcsteplogger kfparticle fairroot
     debuggui jalien-root onnxruntime
     # nixpkgs
-    boost fmt zeromq curl protobuf gsl openssl
-    freetype libpng xz libxml2 fftw nlohmann_json zlib
+    boost fmt zeromq curl protobuf gsl openssl onetbb
+    freetype libpng xz libxml2 fftw fftwSinglePrec nlohmann_json zlib
     abseil-cpp libuv rapidjson cgal microsoft-gsl
-    arrow-cpp flatbuffers hepmc3 fastjet
+    arrow-cpp flatbuffers hepmc3 fastjet grpc
+    # LLVM — needed at configure time for Gandiva (GandivaConfig.cmake → find_dependency(LLVMAlt))
+    llvmPackages.llvm llvmPackages.llvm.dev
   ];
 
+  # CMake 4.x fixes for O2 source code
+  postPatch = ''
+    # Fix rANS + DataFormats: target_compile_options with empty target variable
+    # when BUILD_TESTING=OFF. CMake 4.x treats empty ''${VAR} as literal "PRIVATE".
+    sed -i -E 's/^( *)target_compile_options\(\$\{(TEST_[A-Z_]+)\} (PRIVATE.*)\)/\1if(TARGET ''${\2})\n\1  target_compile_options(''${\2} \3)\n\1endif()/' \
+      Utilities/rANS/CMakeLists.txt \
+      DataFormats/Detectors/Common/CMakeLists.txt
+  '';
+
+  # Pre-generate GPU parameters JSON — CMake 4.x execute_process + string(JSON)
+  # interaction produces empty/unreadable JSON from csv_to_json.sh in sandbox
+  preConfigure = ''
+    bash GPU/GPUTracking/Definitions/Parameters/csv_to_json.sh \
+      GPU/GPUTracking/Definitions/Parameters/GPUParameters.csv \
+      > gpu_params.json
+    cmakeFlagsArray+=("-DGPUCA_OVERRIDE_PARAMETER_FILE=$PWD/gpu_params.json")
+
+    # Create FFTW3::fftw3f IMPORTED target — nixpkgs fftw-single only sets variables,
+    # not modern cmake targets. Provide a wrapper config that creates the target.
+    mkdir -p cmake-fftw3f
+    cat > cmake-fftw3f/FFTW3fConfig.cmake << 'FFTW_EOF'
+    include("${fftwSinglePrec.dev}/lib/cmake/fftw3/FFTW3fConfig.cmake")
+    if(NOT TARGET FFTW3::fftw3f)
+      add_library(FFTW3::fftw3f SHARED IMPORTED)
+      set_target_properties(FFTW3::fftw3f PROPERTIES
+        IMPORTED_LOCATION "${fftwSinglePrec.out}/lib/libfftw3f.so"
+        INTERFACE_INCLUDE_DIRECTORIES "${fftwSinglePrec.dev}/include")
+    endif()
+    FFTW_EOF
+    cmakeFlagsArray+=("-DFFTW3f_DIR=$PWD/cmake-fftw3f")
+  '';
+
   cmakeFlags = [
+    "-DCMAKE_BUILD_TYPE=RELWITHDEBINFO"
     "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
     "-DCMAKE_CXX_STANDARD=20"
     # Disable GPU (not available in Nix sandbox)
@@ -58,10 +92,29 @@ stdenv.mkDerivation rec {
     "-DlibjalienO2_ROOT=${libjalien-o2}"
     "-DJALIEN_ROOT_ROOT=${jalien-root}"
     "-DArrow_DIR=${arrow-cpp}/lib/cmake/Arrow"
+    "-DGandiva_DIR=${arrow-cpp}/lib/cmake/Gandiva"
+    # LLVM/Clang — required by Gandiva's FindLLVMAlt.cmake (see o2.sh lines 258-259)
+    # GandivaConfig.cmake temporarily sets CMAKE_MODULE_PATH to its own dir for
+    # find_dependency(LLVMAlt); if LLVMAlt fails, return() skips MODULE_PATH restore,
+    # breaking all subsequent find_package(MODULE) calls. So clang MUST be provided.
+    "-DLLVM_DIR=${llvmPackages.llvm.dev}/lib/cmake/llvm"
+    "-DCLANG_EXECUTABLE=${llvmPackages.clang-unwrapped}/bin/clang"
+    "-DLLVM_LINK_EXECUTABLE=${llvmPackages.llvm}/bin/llvm-link"
+    "-DCURL_ROOT=${curl.dev}"
+    "-DLibUV_ROOT=${libuv}"
+    "-DONNXRuntime_DIR=${onnxruntime}"
+    "-Dfjcontrib_ROOT=${fastjet}"
+    "-DFFTW3f_DIR=${fftwSinglePrec.dev}/lib/cmake/fftw3"
   ];
 
   # O2 needs VMCWORKDIR at build time
   VMCWORKDIR = "${src}/share";
+
+  # O2 sets ROOT_INCLUDE_PATH for includes from dependencies
+  ROOT_INCLUDE_PATH = lib.concatStringsSep ":" [
+    "${boost.dev}/include"
+    "${openssl.dev}/include"
+  ];
 
   meta = with lib; {
     description = "ALICE O2 software framework for Run 3";

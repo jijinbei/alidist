@@ -2,25 +2,23 @@
 # Source: o2physics.sh
 #
 # Depends on O2 and a few additional packages.
-{ lib, stdenv, fetchFromGitHub, cmake, ninja
+#
+# Source is provided as a flake input (managed by flake.lock).
+# Update with: nix flake lock --update-input o2physics-src
+{ lib, stdenv, cmake, ninja, src
 , o2, onnxruntime, kfparticle, libjalien-o2
-, fastjet
+, fastjet, libuv
 }:
 
-stdenv.mkDerivation rec {
+stdenv.mkDerivation {
   pname = "o2physics";
-  version = "nightly";
+  version = src.shortRev or src.rev or "dev";
 
-  src = fetchFromGitHub {
-    owner = "AliceO2Group";
-    repo = "O2Physics";
-    rev = "master";
-    hash = "sha256-K2UlNC3L4E8s94ZPhrPkMQ8Z0Qz/5UVsd/VnP7v+fwk=";
-  };
+  inherit src;
 
   nativeBuildInputs = [ cmake ninja ];
   buildInputs = [
-    o2 onnxruntime kfparticle libjalien-o2 fastjet
+    o2 onnxruntime kfparticle libjalien-o2 fastjet libuv
   ];
 
   cmakeFlags = [
@@ -28,6 +26,10 @@ stdenv.mkDerivation rec {
     "-DCMAKE_CXX_STANDARD=20"
     "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
     "-DCMAKE_IGNORE_PATH=/opt/homebrew/include"
+    "-DONNXRuntime_DIR=${onnxruntime}"
+    "-Dfjcontrib_ROOT=${fastjet}"
+    "-DlibjalienO2_ROOT=${libjalien-o2}"
+    "-DLibUV_ROOT=${libuv}"
   ];
 
   meta = with lib; {
