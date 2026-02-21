@@ -7,6 +7,10 @@
 # Already set by nixpkgs:     fftw3=ON, mathmore=ON, vdt=OFF
 # Removed in ROOT 6.38:       alien, pgsql, minuit2 (FATAL_ERROR if set)
 #
+# mold: ROOT has its own mold version check (CMakeLists.txt:736) that is
+# incompatible with useMoldLinker's cc wrapper. Use explicit CMake flags
+# instead of the stdenv adapter.
+#
 # See docs/implementation.md for the full analysis.
 { root
 , pythia
