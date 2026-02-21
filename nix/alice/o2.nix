@@ -16,7 +16,7 @@
 , freetype, libpng, xz, libxml2, fftw, fftwSinglePrec, nlohmann_json, zlib
 , abseil-cpp, libuv, rapidjson, cgal, microsoft-gsl
 , arrow-cpp, flatbuffers, hepmc3, fastjet
-, python3, onetbb, grpc
+, python3, onetbb, grpc, xrootd, glfw, gbenchmark
 , llvmPackages
 }:
 
@@ -43,6 +43,12 @@ stdenv.mkDerivation {
     freetype libpng xz libxml2 fftw fftwSinglePrec nlohmann_json zlib
     abseil-cpp libuv rapidjson cgal microsoft-gsl
     arrow-cpp flatbuffers hepmc3 fastjet grpc
+    # XRootD — RECOMMENDED by O2Dependencies.cmake (o2.sh line 241)
+    xrootd
+    # GLFW — RECOMMENDED (for DebugGUI integration)
+    glfw
+    # Google Benchmark — used unconditionally in Framework/Core benchmarks
+    gbenchmark
     # LLVM — needed at configure time for Gandiva (GandivaConfig.cmake → find_dependency(LLVMAlt))
     llvmPackages.llvm llvmPackages.llvm.dev
   ];
@@ -54,6 +60,16 @@ stdenv.mkDerivation {
     sed -i -E 's/^( *)target_compile_options\(\$\{(TEST_[A-Z_]+)\} (PRIVATE.*)\)/\1if(TARGET ''${\2})\n\1  target_compile_options(''${\2} \3)\n\1endif()/' \
       Utilities/rANS/CMakeLists.txt \
       DataFormats/Detectors/Common/CMakeLists.txt
+
+    # Fix shebang: /bin/bash doesn't exist in Nix sandbox
+    patchShebangs cmake/rootcling_wrapper.sh.in
+
+    # ROOT 6.38: TGenericClassInfo::AdoptMemberStreamer removed.
+    # Use TClass::GetClass()->AdoptMemberStreamer() instead.
+    sed -i 's|ROOT::GenerateInitInstance((o2::tpc::CalArray<o2::tpc::PadFlags> \*)nullptr)->AdoptMemberStreamer|TClass::GetClass<o2::tpc::CalArray<o2::tpc::PadFlags>>()->AdoptMemberStreamer|' \
+      Detectors/TPC/baserecsim/src/TPCFlagsMemberCustomStreamer.cxx
+    sed -i '/#include <TMemberStreamer.h>/a #include <TClass.h>' \
+      Detectors/TPC/baserecsim/src/TPCFlagsMemberCustomStreamer.cxx
   '';
 
   # Pre-generate GPU parameters JSON — CMake 4.x execute_process + string(JSON)
@@ -104,6 +120,8 @@ stdenv.mkDerivation {
     "-DLibUV_ROOT=${libuv}"
     "-DONNXRuntime_DIR=${onnxruntime}"
     "-Dfjcontrib_ROOT=${fastjet}"
+    # XRootD — O2's FindXRootD.cmake uses XROOTD_DIR hint (o2.sh line 241)
+    "-DXROOTD_DIR=${xrootd}"
     "-DFFTW3f_DIR=${fftwSinglePrec.dev}/lib/cmake/fftw3"
   ];
 

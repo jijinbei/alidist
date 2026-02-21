@@ -14,6 +14,10 @@ stdenv.mkDerivation rec {
 
   nativeBuildInputs = [ cmake ninja ];
   buildInputs = [ root openssl zlib xrootd libwebsockets libuv json_c alice-grid-utils ];
+  # alice-grid-utils provides TAliceFile.h, TAliceCollection.h, TAliceJobStatus.h
+  # which jalien-root headers (TJAlienFile.h etc.) include via #include.
+  # Propagate so consumers like O2 can compile against jalien-root headers.
+  propagatedBuildInputs = [ alice-grid-utils ];
 
   # Patch FindXROOTD.cmake: version detection is broken for XRootD 5.x,
   # incorrectly sets OLDPACK=TRUE and looks for nonexistent v4 library names.

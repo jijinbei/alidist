@@ -21,6 +21,7 @@
 
 root.overrideAttrs (old: {
   cmakeFlags = (old.cmakeFlags or []) ++ [
+    "-DCMAKE_CXX_STANDARD=20" # ALICE defaults-o2.sh: CXXSTD=20
     "-Dpythia8=ON"      # required for physics analysis (GPL)
     "-Darrow=ON"         # required by O2 data format
     "-Dtmva-sofie=ON"   # ML inference without runtime dependency

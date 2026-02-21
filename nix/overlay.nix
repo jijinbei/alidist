@@ -139,6 +139,7 @@ in {
       mlmodels = final.alice.mlmodels;
       onnxruntime = final.alice.onnxruntime;
       kfparticle = final.alice.kfparticle;
+      inherit (prev) xrootd glfw gbenchmark;
     };
     o2physics = callPackage ./alice/o2physics.nix {
       src = o2physics-src;
