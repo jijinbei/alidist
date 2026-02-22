@@ -5,7 +5,10 @@
 final: prev:
 let
   # Use mold linker for all ALICE packages (matches defaults-o2.sh)
-  moldStdenv = prev.stdenvAdapters.useMoldLinker prev.stdenv;
+  # mold is Linux-only; on macOS fall back to the default linker
+  moldStdenv = if prev.stdenv.hostPlatform.isLinux
+    then prev.stdenvAdapters.useMoldLinker prev.stdenv
+    else prev.stdenv;
   callPackage = prev.lib.callPackageWith (final // { stdenv = moldStdenv; });
 
   # Arrow with Gandiva (JIT expression engine) — required by O2 DPL framework.

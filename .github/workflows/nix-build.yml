@@ -9,7 +9,11 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
 
@@ -25,27 +29,21 @@ jobs:
       - name: Flake check
         run: nix flake check
 
-      # Layer 1: ROOT (largest dependency, cache first)
       - name: Build ROOT
         run: nix build .#root --print-build-logs
 
-      # Layer 2: key packages
       - name: Build Layer 2
         run: |
           nix build .#fairroot --print-build-logs
           nix build .#geant4 --print-build-logs
 
-      # Layer 3: O2 and O2Physics
-      # These require 16GB+ RAM — on ubuntu-latest (7GB) they rely on
-      # cache hits from local `cachix push`. With a self-hosted runner
-      # that has enough memory, uncomment --print-build-logs to build
-      # from source.
-      - name: Build O2 (cache-only on default runner)
+      # O2/O2Physics require 16GB+ RAM — on GitHub-hosted runners they
+      # rely on cache hits from local `cachix push`.
+      - name: Build O2
         run: nix build .#o2 --print-build-logs
 
-      - name: Build O2Physics (cache-only on default runner)
+      - name: Build O2Physics
         run: nix build .#o2physics --print-build-logs
 
-      # Smoke-test the dev shell
       - name: Test devShell
         run: nix develop .#o2physics --command bash -c 'echo OK'
