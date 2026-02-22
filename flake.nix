@@ -1,6 +1,11 @@
 {
   description = "ALICE experiment software stack — Nix layer for alidist";
 
+  nixConfig = {
+    extra-substituters = [ "https://alice-nix.cachix.org" ];
+    extra-trusted-public-keys = [ "alice-nix.cachix.org-1:AcbGlujqdttNTQ5Hu3DXB6DVPmSD42whLdskx9OO108=" ];
+  };
+
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     flake-utils.url = "github:numtide/flake-utils";
@@ -37,11 +42,7 @@
       {
         packages = {
           default = a.root;
-
-          # Layer 1
           root = a.root;
-
-          # Layer 2a
           faircmakemodules = a.faircmakemodules;
           vc = a.vc;
           vmc = a.vmc;
@@ -49,8 +50,6 @@
           libinfologger = a.libinfologger;
           common-o2 = a.common-o2;
           mlmodels = a.mlmodels;
-
-          # Layer 2b
           fairmq = a.fairmq;
           geant4 = a.geant4;
           geant3 = a.geant3;
@@ -60,8 +59,6 @@
           libjalien-o2 = a.libjalien-o2;
           bookkeeping-api = a.bookkeeping-api;
           ppconsul = a.ppconsul;
-
-          # Layer 2c
           geant4_vmc = a.geant4_vmc;
           mcsteplogger = a.mcsteplogger;
           kfparticle = a.kfparticle;
@@ -69,13 +66,10 @@
           debuggui = a.debuggui;
           jalien-root = a.jalien-root;
           onnxruntime = a.onnxruntime;
-
-          # Layer 3
           o2 = a.o2;
           o2physics = a.o2physics;
         };
 
-        # Development shells
         devShells.default = pkgs.mkShell {
           name = "alice-dev";
           packages = [

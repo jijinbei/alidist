@@ -32,7 +32,6 @@ let
   });
 in {
   alice = {
-    # Layer 1: ROOT with ALICE overrides
     # ROOT uses explicit mold CMake flags (not moldStdenv) because ROOT's
     # own mold version check is incompatible with useMoldLinker's cc wrapper.
     root = callPackage ./hep/root.nix {
@@ -40,10 +39,7 @@ in {
       pythia = prev.pythia or null;
     };
 
-    # Arrow with Gandiva support for O2
     inherit arrow-cpp-gandiva;
-
-    # Layer 2a: Simple packages
     faircmakemodules = callPackage ./hep/faircmakemodules.nix {};
     vc = callPackage ./hep/vc.nix {};
     vmc = callPackage ./hep/vmc.nix { root = final.alice.root; };
@@ -52,7 +48,6 @@ in {
     common-o2 = callPackage ./alice/common-o2.nix {};
     mlmodels = callPackage ./alice/mlmodels.nix {};
 
-    # Layer 2b: Medium packages
     fairmq = callPackage ./hep/fairmq.nix {
       inherit (final.alice) faircmakemodules fairlogger;
     };
@@ -76,7 +71,6 @@ in {
     ppconsul = callPackage ./alice/ppconsul.nix {};
     alice-grid-utils = callPackage ./alice/alice-grid-utils.nix {};
 
-    # Layer 2c: Integration packages
     geant4_vmc = callPackage ./hep/geant4_vmc.nix {
       root = final.alice.root;
       vmc = final.alice.vmc;
@@ -104,7 +98,6 @@ in {
       root = final.alice.root;
       alice-grid-utils = final.alice.alice-grid-utils;
     };
-    # Use nixpkgs onnxruntime (v1.23.2) — close enough to ALICE's v1.22.0
     # Tests fail with GCC 15 (-fno-rtti + typeid), library itself builds fine
     onnxruntime = (prev.onnxruntime.override {
       pythonSupport = false;
@@ -113,8 +106,6 @@ in {
       doCheck = false;
     });
 
-    # Layer 3: ALICE applications
-    # Sources are managed as flake inputs (flake.lock pins the commit)
     o2 = callPackage ./alice/o2.nix {
       src = o2-src;
       arrow-cpp = arrow-cpp-gandiva;
@@ -145,7 +136,6 @@ in {
       src = o2physics-src;
       o2 = final.alice.o2;
       arrow-cpp = arrow-cpp-gandiva;
-      # O2Dependencies.cmake re-finds ALL of O2's deps — pass them all
       root = final.alice.root;
       vmc = final.alice.vmc;
       vc = final.alice.vc;
