@@ -104,8 +104,19 @@
             pkgs.git
           ];
           shellHook = ''
-            export VMCWORKDIR="$O2_ROOT/share"
-            export ROOT_INCLUDE_PATH="${a.o2}/include:${a.o2}/include/GPU''${ROOT_INCLUDE_PATH:+:$ROOT_INCLUDE_PATH}"
+            export O2_ROOT="${a.o2}"
+            export VMCWORKDIR="${a.o2}/share"
+            export LD_LIBRARY_PATH="${a.o2}/lib''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+            export ROOT_INCLUDE_PATH="${pkgs.lib.concatStringsSep ":" [
+              "${a.o2}/include"
+              "${a.o2}/include/GPU"
+              "${a.fairroot}/include"
+              "${a.fairmq}/include/fairmq"
+              "${a.fairlogger}/include"
+              "${a.vmc}/include/vmc"
+              "${pkgs.boost.dev}/include"
+              "${pkgs.openssl.dev}/include"
+            ]}''${ROOT_INCLUDE_PATH:+:$ROOT_INCLUDE_PATH}"
             echo "ALICE O2 dev shell"
             echo "  O2:   ${a.o2.version}"
             echo "  ROOT: ${a.root.version}"
@@ -125,8 +136,28 @@
             pkgs.git
           ];
           shellHook = ''
-            export VMCWORKDIR="$O2_ROOT/share"
-            export ROOT_INCLUDE_PATH="${a.o2physics}/include:${a.o2}/include:${a.o2}/include/GPU''${ROOT_INCLUDE_PATH:+:$ROOT_INCLUDE_PATH}"
+            # O2/O2Physics root directories — workflows use these to find configs
+            export O2_ROOT="${a.o2}"
+            export O2PHYSICS_ROOT="${a.o2physics}"
+            export VMCWORKDIR="${a.o2}/share"
+
+            # dlopen() plugin loading — O2 loads libraries at runtime via dlopen
+            export LD_LIBRARY_PATH="${a.o2}/lib:${a.o2physics}/lib''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+
+            # ROOT/cling runtime header search — needed for dictionaries and JIT
+            export ROOT_INCLUDE_PATH="${pkgs.lib.concatStringsSep ":" [
+              "${a.o2physics}/include"
+              "${a.o2}/include"
+              "${a.o2}/include/GPU"
+              "${a.fairroot}/include"
+              "${a.fairmq}/include/fairmq"
+              "${a.fairlogger}/include"
+              "${a.vmc}/include/vmc"
+              "${pkgs.boost.dev}/include"
+              "${pkgs.openssl.dev}/include"
+              "${pkgs.fmt.dev}/include"
+            ]}''${ROOT_INCLUDE_PATH:+:$ROOT_INCLUDE_PATH}"
+
             echo "ALICE O2Physics dev shell"
             echo "  O2Physics: ${a.o2physics.version}"
             echo "  O2:        ${a.o2.version}"
