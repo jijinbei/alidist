@@ -37,11 +37,11 @@
     "o2-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1771687886,
-        "narHash": "sha256-AYqvfXy9iCq4V7C6iuMW8ShdGVrzW7tYRPhDAKTzkcA=",
+        "lastModified": 1771696576,
+        "narHash": "sha256-xBBb5YSs1U8WtfmeB7uGC3PgsQOMei4J+8ZYheunSkE=",
         "owner": "AliceO2Group",
         "repo": "AliceO2",
-        "rev": "f23aa72dfdb3779502c9510526dab12715756c40",
+        "rev": "84a89e877a04d98c1969997a3789449ec26887bb",
         "type": "github"
       },
       "original": {
@@ -54,11 +54,11 @@
     "o2physics-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1771692779,
-        "narHash": "sha256-4g/Y4tfHXGMSCWiYU2JWg37t+AM3WkXbNDXXPuUlUYE=",
+        "lastModified": 1771771848,
+        "narHash": "sha256-Sek5AdSbIbp/0Yg0VFle0CySxHtTRU3v7Bp7YPV1AZo=",
         "owner": "AliceO2Group",
         "repo": "O2Physics",
-        "rev": "ceb2cb7371f3b03b7e30eac43569be32a722e715",
+        "rev": "d3d1e29c12d9dc929c30dfe59a9de7fcee5b8528",
         "type": "github"
       },
       "original": {
