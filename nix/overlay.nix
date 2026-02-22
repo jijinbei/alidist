@@ -144,9 +144,30 @@ in {
     o2physics = callPackage ./alice/o2physics.nix {
       src = o2physics-src;
       o2 = final.alice.o2;
-      onnxruntime = final.alice.onnxruntime;
-      kfparticle = final.alice.kfparticle;
+      arrow-cpp = arrow-cpp-gandiva;
+      # O2Dependencies.cmake re-finds ALL of O2's deps — pass them all
+      root = final.alice.root;
+      vmc = final.alice.vmc;
+      vc = final.alice.vc;
+      fairlogger = final.alice.fairlogger;
+      common-o2 = final.alice.common-o2;
+      libinfologger = final.alice.libinfologger;
+      fairmq = final.alice.fairmq;
+      geant4 = final.alice.geant4;
+      geant3 = final.alice.geant3;
+      configuration = final.alice.configuration;
+      monitoring = final.alice.monitoring;
+      bookkeeping-api = final.alice.bookkeeping-api;
       libjalien-o2 = final.alice.libjalien-o2;
+      geant4_vmc = final.alice.geant4_vmc;
+      mcsteplogger = final.alice.mcsteplogger;
+      kfparticle = final.alice.kfparticle;
+      fairroot = final.alice.fairroot;
+      debuggui = final.alice.debuggui;
+      jalien-root = final.alice.jalien-root;
+      vgm = final.alice.vgm;
+      onnxruntime = final.alice.onnxruntime;
+      inherit (prev) xrootd glfw gbenchmark;
     };
   };
 }
