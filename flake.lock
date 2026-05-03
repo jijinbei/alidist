@@ -20,11 +20,11 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1771207753,
-        "narHash": "sha256-b9uG8yN50DRQ6A7JdZBfzq718ryYrlmGgqkRm9OOwCE=",
+        "lastModified": 1777641297,
+        "narHash": "sha256-WNGcmeOZ8Tr9dq6ztCspYbzWFswr2mPebM9LpsfGxPk=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "d1c15b7d5806069da59e819999d70e1cec0760bf",
+        "rev": "c6d65881c5624c9cae5ea6cedef24699b0c0a4c0",
         "type": "github"
       },
       "original": {
@@ -37,11 +37,11 @@
     "o2-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1771696576,
-        "narHash": "sha256-xBBb5YSs1U8WtfmeB7uGC3PgsQOMei4J+8ZYheunSkE=",
+        "lastModified": 1777698367,
+        "narHash": "sha256-P3aTvWivrpxuAG98hCNIAt/4cVVRf1QH9NBWzUEZ4fg=",
         "owner": "AliceO2Group",
         "repo": "AliceO2",
-        "rev": "84a89e877a04d98c1969997a3789449ec26887bb",
+        "rev": "d87cff5580733c2f480f7bb8ad4cf97178349280",
         "type": "github"
       },
       "original": {
@@ -54,11 +54,11 @@
     "o2physics-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1771771848,
-        "narHash": "sha256-Sek5AdSbIbp/0Yg0VFle0CySxHtTRU3v7Bp7YPV1AZo=",
+        "lastModified": 1777773421,
+        "narHash": "sha256-DtK1QtxlP9TELiouE53huGJtUyb0buKFPBbjjM2aTo8=",
         "owner": "AliceO2Group",
         "repo": "O2Physics",
-        "rev": "d3d1e29c12d9dc929c30dfe59a9de7fcee5b8528",
+        "rev": "8d0b2c148a07224c4856139d3239efc2442bffce",
         "type": "github"
       },
       "original": {
